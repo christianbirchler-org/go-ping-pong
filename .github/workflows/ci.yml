@@ -1,0 +1,48 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+jobs:
+  Test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.23'
+      - name: Display Go version
+        run: go version
+      - name: Run tests
+        run: go test -coverprofile="coverage.out" -v ./...
+
+  Build:
+    needs: Test
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: christianbirchler-org
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/christianbirchler-org/go-ping-pong:${{ github.sha }}
+            ghcr.io/christianbirchler-org/go-ping-pong:latest
