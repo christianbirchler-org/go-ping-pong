@@ -24,3 +24,4 @@ curl http://localhost:8080/ping
 ```
 
 ## License
+[MIT](./LICENSE.txt)
