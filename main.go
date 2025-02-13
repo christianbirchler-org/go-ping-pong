@@ -3,6 +3,9 @@ package main
 import (
 	"log/slog"
 	"net/http"
+	"database/sql"
+
+	_ "github.com/lib/pq"
 )
 
 type Counter interface {
@@ -11,6 +14,7 @@ type Counter interface {
 }
 
 type PostgresCounter struct {
+	db *sql.DB
 }
 
 func (pc *PostgresCounter) increment() (int, error) {
@@ -35,6 +39,16 @@ func (h *PingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 func main() {
 	slog.Info("start go-sample")
+
+	connStr := ""
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		slog.Error("connect to DB", err)
+	}
+
+	_ = &PostgresCounter{
+		db: db,
+	}
 
 	http.Handle("/ping", &PingHandler{
 		counter: &PostgresCounter{},
