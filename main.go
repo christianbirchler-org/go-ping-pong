@@ -1,9 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"log/slog"
 	"net/http"
-	"database/sql"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 
 	_ "github.com/lib/pq"
 )
@@ -40,18 +43,28 @@ func (h *PingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func main() {
 	slog.Info("start go-sample")
 
-	connStr := ""
+	connStr := "postgresql://..."
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		slog.Error("connect to DB", err)
 	}
-
-	_ = &PostgresCounter{
-		db: db,
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		slog.Error("get driver with db instance", err)
+	}
+	m, err := migrate.NewWithDatabaseInstance("file:///migrations", "postgres", driver)
+	if err != nil {
+		slog.Error("create migration of the DB", err)
+	}
+	err = m.Up()
+	if err != nil {
+		slog.Error("migrate DB", err)
 	}
 
 	http.Handle("/ping", &PingHandler{
-		counter: &PostgresCounter{},
+		counter: &PostgresCounter{
+			db: db,
+		},
 	})
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
