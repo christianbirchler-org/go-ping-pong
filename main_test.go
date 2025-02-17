@@ -40,5 +40,9 @@ func TestMain(t *testing.T) {
 	defer func() {
 		pc.Terminate(ctx)
 	}()
+	err = pc.Start(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 }
