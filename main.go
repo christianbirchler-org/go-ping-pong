@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"log/slog"
 	"net/http"
 
@@ -46,19 +47,19 @@ func main() {
 	connStr := "postgresql://..."
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		slog.Error("connect to DB", err)
+		log.Fatal("connect to DB", err.Error())
 	}
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		slog.Error("get driver with db instance", err)
+		log.Fatal("get driver with db instance", err.Error())
 	}
 	m, err := migrate.NewWithDatabaseInstance("file:///migrations", "postgres", driver)
 	if err != nil {
-		slog.Error("create migration of the DB", err)
+		log.Fatal("create migration of the DB", err.Error())
 	}
 	err = m.Up()
 	if err != nil {
-		slog.Error("migrate DB", err)
+		log.Fatal("migrate DB", err.Error())
 	}
 
 	http.Handle("/ping", &PingHandler{
