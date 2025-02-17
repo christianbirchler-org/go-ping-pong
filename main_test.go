@@ -11,7 +11,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func Postgres()(context.Context, *postgres.PostgresContainer, error){
+func Postgres() (context.Context, *postgres.PostgresContainer, error) {
 	ctx := context.Background()
 
 	dbName := "users"
