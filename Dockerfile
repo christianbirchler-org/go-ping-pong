@@ -4,12 +4,12 @@ WORKDIR /app
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o ping-pong main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o go-ping-pong .
 
 FROM alpine:3.20
 
 WORKDIR /app
 
-COPY --from=build /app/ping-pong /app
+COPY --from=build /app/go-ping-pong /app
 
-CMD ["/app/ping-pong"]
+CMD ["/app/go-ping-pong"]
