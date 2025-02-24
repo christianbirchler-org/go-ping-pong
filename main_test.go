@@ -1,8 +1,11 @@
-package main_test
+package main
 
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -41,20 +44,16 @@ func NewPostgresDatabase(ctx context.Context, t *testing.T, pc *postgres.Postgre
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(h)
 
 	p, err := pc.MappedPort(ctx, "5432")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(p.Port())
 
 	dbName := "users"
 	dbUser := "user"
 	dbPassword := "password"
 	connStr := "postgres://" + dbUser + ":" + dbPassword + "@" + h + ":" + p.Port() + "/" + dbName + "?sslmode=disable"
-
-	t.Log(connStr)
 
 	return sql.Open("postgres", connStr)
 
@@ -70,9 +69,6 @@ func NewDatabaseMigration(db *sql.DB, t *testing.T) (*migrate.Migrate, error) {
 }
 
 func TestE2ESinglePing(t *testing.T) {
-	// TODO
-	t.Skip("not implemented")
-
 	ctx, pc, err := NewPostgresContainer()
 	if err != nil {
 		t.Fatal(err)
@@ -99,6 +95,37 @@ func TestE2ESinglePing(t *testing.T) {
 	err = m.Up()
 	if err != nil {
 		t.Fatal("migrate DB", err.Error())
+	}
+
+	// test subject
+	c := &PostgresCounter{db: db}
+	ph := &PingHandler{counter: c}
+
+	ts := httptest.NewServer(ph)
+	defer ts.Close()
+
+	// task
+	tc := ts.Client()
+	resp, err := tc.Get(ts.URL + "/ping")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	var pongResponse PongResponse
+	err = json.NewDecoder(resp.Body).Decode(&pongResponse)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// oracle
+	if pongResponse.Msg != "pong" {
+		t.Fatal("pong response:", pongResponse)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal("response status code:", resp.StatusCode)
 	}
 
 }
