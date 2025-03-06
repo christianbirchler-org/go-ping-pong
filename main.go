@@ -30,7 +30,7 @@ func main() {
 		log.Fatal("get driver with db instance", err.Error())
 	}
 
-	m, err := migrate.NewWithDatabaseInstance("file:///migrations", "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
 	if err != nil {
 		log.Fatal("create migration of the DB", err.Error())
 	}
