@@ -11,6 +11,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/joho/godotenv"
 
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
 
