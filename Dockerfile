@@ -11,5 +11,6 @@ FROM alpine:3.20
 WORKDIR /app
 
 COPY --from=build /app/go-ping-pong /app
+COPY --from=build /app/migrations /app
 
 CMD ["/app/go-ping-pong"]
