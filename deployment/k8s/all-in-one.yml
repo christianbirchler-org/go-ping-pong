@@ -16,12 +16,81 @@ spec:
       containers:
       - name: go-ping-pong
         image: ghcr.io/christianbirchler-org/go-ping-pong:latest
+        imagePullPolicy: Always
+        env:
+        - name: PG_URI
+          value: postgresql://app:fooBar@postgres:5432/go-ping-pong?sslmode=disable
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         resources:
           limits:
             memory: "128Mi"
             cpu: "500m"
         ports:
         - containerPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  postgresql
+  labels:
+    app:  postgresql
+spec:
+  selector:
+    matchLabels:
+      app: postgresql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  postgresql
+    spec:
+      containers:
+      - name:  postgresql
+        image:  postgres:16
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+          limits:
+            cpu: "4"
+            memory: 8Gi
+        env:
+        - name: POSTGRES_DB
+          value: go-ping-pong
+        - name: POSTGRES_USER
+          value: app
+        - name: POSTGRES_PASSWORD
+          value: fooBar
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        ports:
+        - containerPort:  5432
+          name:  postgresql
+        volumeMounts:
+        - name: postgresql
+          mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgresql
+          persistentVolumeClaim:
+            claimName: postgresql-pvc
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-pvc
+  labels:
+    app: postgresql
+spec:
+  storageClassName:	cinder-csi
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
 
 ---
 apiVersion: v1
@@ -34,16 +103,30 @@ spec:
   selector:
     app: go-ping-pong
   ports:
-  - port: 8080
+  - port: 80
     targetPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgresql
+  type: ClusterIP
+  ports:
+  - name: postgresql
+    protocol: TCP
+    port: 5432
+    targetPort: 5432
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: name
+  name: go-ping-pong
   annotations:
-    #ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
   - host: go-ping-pong.pm4.init-lab.ch
@@ -55,4 +138,4 @@ spec:
           service:
             name: go-ping-pong
             port:
-              number: 8080
+              number: 80
