@@ -24,8 +24,8 @@ spec:
           value: /var/lib/postgresql/data/pgdata
         resources:
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            memory: 1Gi
+            cpu: 2
         ports:
         - containerPort: 8080
 
@@ -85,7 +85,7 @@ metadata:
   labels:
     app: postgresql
 spec:
-  storageClassName:	cinder-csi
+  storageClassName: cinder-csi
   accessModes:
   - ReadWriteOnce
   resources:
