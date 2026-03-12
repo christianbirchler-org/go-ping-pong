@@ -1,5 +1,6 @@
 # go-ping-pong
 This is a sample project for bootstrapping a web application with Go and showcasing GitHub Actions.
+Hello from class.
 
 - [CHANGELOG.md](./CHANGELOG.md)
 
